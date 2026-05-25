@@ -3,12 +3,12 @@ package me.enderkill98.proxlib.client.mixin;
 import me.enderkill98.proxlib.ProxPacketReceiveHandler;
 import me.enderkill98.proxlib.ProxPlayerReader;
 import me.enderkill98.proxlib.client.ProxLib;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.packet.s2c.play.BlockBreakingProgressS2CPacket;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,14 +19,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashMap;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPacketListener.class)
 public abstract class ProxReaderMixin {
 
 	@Unique private static final Logger LOGGER = LoggerFactory.getLogger("ProxLib/Mixin/Reader");
-	@Unique public final HashMap<PlayerEntity, ProxPlayerReader> proxlib$readers = new HashMap<>();
+	@Unique public final HashMap<Player, ProxPlayerReader> proxlib$readers = new HashMap<>();
 	@Unique private long readersLastCleanedUpAt = -1L;
 
-	@Unique private static ProxPlayerReader proxChat$createReaderFor(PlayerEntity sender) {
+	@Unique private static ProxPlayerReader proxChat$createReaderFor(Player sender) {
 		ProxPlayerReader reader = new ProxPlayerReader(sender);
 		reader.addHandler((_sender, id, data) -> {
 			// Call all global handlers
@@ -60,22 +60,22 @@ public abstract class ProxReaderMixin {
 	 */
 	@Inject(at = @At("RETURN"), method = "onWorldTimeUpdate")
 	public void onWorldTimeUpdate(CallbackInfo info) {
-		if(readersLastCleanedUpAt != -1L && Util.getMeasuringTimeMs() - readersLastCleanedUpAt < 750)
+		if(readersLastCleanedUpAt != -1L && Util.getMillis() - readersLastCleanedUpAt < 750)
 			return; // Already called too recently
 
 		// Remove all readers where the player was removed
 		proxlib$readers.keySet().stream().filter(Entity::isRemoved).toList().forEach(proxlib$readers::remove);
-		readersLastCleanedUpAt = Util.getMeasuringTimeMs();
+		readersLastCleanedUpAt = Util.getMillis();
 	}
 
 	@Inject(at = @At("RETURN"), method = "onBlockBreakingProgress")
-	public void onBlockBreakingProgress(BlockBreakingProgressS2CPacket packet, CallbackInfo info) {
+	public void onBlockBreakingProgress(ClientboundBlockDestructionPacket packet, CallbackInfo info) {
 		if(packet.getProgress() != 255) return; // Not the result of ABORT_DESTROY_BLOCK
 
-		final MinecraftClient client = MinecraftClient.getInstance();
-		if(client.player == null || client.world == null) return;
-		Entity senderEntity = client.world.getEntityById(packet.getEntityId());
-		if(!(senderEntity instanceof PlayerEntity sender)) return;
+		final Minecraft client = Minecraft.getInstance();
+		if(client.player == null || client.level == null) return;
+		Entity senderEntity = client.level.getEntity(packet.getId());
+		if(!(senderEntity instanceof Player sender)) return;
 
 		ProxPlayerReader reader = proxlib$readers.computeIfAbsent(sender, ProxReaderMixin::proxChat$createReaderFor);
 		reader.handle(packet);

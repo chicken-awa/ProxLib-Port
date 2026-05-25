@@ -1,0 +1,30 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="${id}"
+version="${version}"
+displayName="${name}"
+displayURL = "https://github.com/chicken-awa/ProxLib-Port"
+description = '''Library that enables close-by players to communicate with each other autonomously.\nOriginal Author: EnderKill98 | Port by: chicken_awa'''
+logoFile = "icon.png"
+authors = "EnderKill98, chicken_awa"
+
+
+[[mixins]]
+config = "proxlib.mixins.json"
+
+[[dependencies."${id}"]]
+modId="neoforge"
+type="required"
+versionRange="[21,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies."${id}"]]
+modId="minecraft"
+type="required"
+versionRange="${mcdep}"
+ordering="NONE"
+side="BOTH"

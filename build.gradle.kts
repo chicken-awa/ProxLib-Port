@@ -1,6 +1,6 @@
 plugins {
     `maven-publish`
-    id("fabric-loom")
+    id("net.neoforged.moddev")
     //id("dev.kikugie.j52j")
     //id("me.modmuss50.mod-publish-plugin")
 }
@@ -10,7 +10,6 @@ class ModData {
     val name = property("mod.name").toString()
     val version = property("mod.version").toString()
     val group = property("mod.group").toString()
-    val java = property("mod.java").toString()
 }
 
 class ModDependencies {
@@ -22,7 +21,7 @@ val deps = ModDependencies()
 val mcVersion = stonecutter.current.version
 val mcDep = property("mod.mc_dep").toString()
 
-version = "${mod.version}+$mcVersion"
+version = "${mod.version}+$mcVersion-${property("mod.loader")}"
 group = mod.group
 base { archivesName.set(mod.id) }
 
@@ -36,32 +35,6 @@ repositories {
 }
 
 dependencies {
-    fun fapi(vararg modules: String) = modules.forEach {
-        modImplementation(fabricApi.module(it, deps["fabric_api"]))
-    }
-
-    minecraft("com.mojang:minecraft:$mcVersion")
-    mappings("net.fabricmc:yarn:$mcVersion+build.${deps["yarn_build"]}:v2")
-    modImplementation("net.fabricmc:fabric-loader:${deps["fabric_loader"]}")
-
-    fapi(
-        // Add modules from https://github.com/FabricMC/fabric
-        "fabric-lifecycle-events-v1",
-    )
-}
-
-loom {
-    decompilers {
-        get("vineflower").apply { // Adds names to lambdas - useful for mixins
-            options.put("mark-corresponding-synthetics", "1")
-        }
-    }
-
-    runConfigs.all {
-        ideConfigGenerated(true)
-        vmArgs("-Dmixin.debug.export=true")
-        runDir = "../../run"
-    }
 }
 
 java {
@@ -71,27 +44,56 @@ java {
     sourceCompatibility = java
 }
 
+neoForge {
+    version = deps["neo_version"]
+
+    parchment {
+        mappingsVersion = deps["parchment_mappings"]
+        minecraftVersion = mcVersion
+    }
+
+    runs {
+        register("client") {
+            client()
+            gameDirectory = file("../../run/")
+        }
+
+        register("server") {
+            server()
+            gameDirectory = file("../../run/")
+        }
+
+        configureEach {
+            systemProperty("mixin.debug.export", "true")
+        }
+    }
+
+    mods {
+        register(mod.id) {
+            sourceSet(sourceSets.main.get())
+        }
+    }
+}
+
 tasks.processResources {
     inputs.property("id", mod.id)
     inputs.property("name", mod.name)
     inputs.property("version", mod.version)
     inputs.property("mcdep", mcDep)
-    inputs.property("java", mod.java)
 
     val map = mapOf(
         "id" to mod.id,
         "name" to mod.name,
         "version" to mod.version,
-        "mcdep" to mcDep,
-        "java" to mod.java
+        "mcdep" to mcDep
     )
 
-    filesMatching("fabric.mod.json") { expand(map) }
+    filesMatching("META-INF/neoforge.mods.toml") { expand(map) }
 }
 
 tasks.register<Copy>("buildAndCollect") {
     group = "build"
-    from(tasks.remapJar.get().archiveFile)
+    from(tasks.jar.get().archiveFile)
     into(rootProject.layout.buildDirectory.file("libs/${mod.version}"))
     dependsOn("build")
 }

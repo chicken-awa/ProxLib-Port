@@ -122,3 +122,10 @@ runs/
 # Custom
 gradle/wrapper/gradle-wrapper.jar
 gradlew.bat
+
+# vscode
+.settings/
+.vscode/
+bin/
+.classpath
+.project
