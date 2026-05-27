@@ -4,7 +4,10 @@ import me.enderkill98.proxlib.ProxDataUnits;
 import me.enderkill98.proxlib.ProxPacketIdentifier;
 import me.enderkill98.proxlib.ProxPacketReceiveHandler;
 import me.enderkill98.proxlib.ProxPackets;
-import net.fabricmc.api.ClientModInitializer;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
@@ -13,9 +16,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-public class ProxLib implements ClientModInitializer {
+@Mod(value = "proxlib", dist = Dist.CLIENT)
+public class ProxLib {
 
-    @Override public void onInitializeClient() {}
+    public ProxLib(IEventBus modEventBus) {
+        modEventBus.addListener(this::onClientSetup);
+    }
+
+    private void onClientSetup(final FMLClientSetupEvent event) {}
 
     private static final ArrayList<ProxPacketReceiveHandler> REGISTERED_GLOBAL_HANDLERS = new ArrayList<>();
     private static final HashMap<ProxPacketIdentifier, ArrayList<ProxPacketReceiveHandler>> REGISTERED_SPECIFIC_HANDLERS = new HashMap<>();

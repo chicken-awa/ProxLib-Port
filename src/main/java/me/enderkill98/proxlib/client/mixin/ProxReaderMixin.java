@@ -3,7 +3,11 @@ package me.enderkill98.proxlib.client.mixin;
 import me.enderkill98.proxlib.ProxPacketReceiveHandler;
 import me.enderkill98.proxlib.ProxPlayerReader;
 import me.enderkill98.proxlib.client.ProxLib;
+//?if>=1.21.11{
+/*import net.minecraft.util.Util;
+*///?}else{
 import net.minecraft.Util;
+//?}
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
@@ -50,7 +54,7 @@ public abstract class ProxReaderMixin {
 		return reader;
 	}
 
-	@Inject(at = @At("RETURN"), method = { "onPlayerRespawn", "onGameJoin", "clearWorld" })
+	@Inject(at = @At("RETURN"), method = { "handleRespawn", "handleLogin", "clearLevel" })
 	public void stateCleared(CallbackInfo info) {
 		proxlib$readers.clear();
 	}
@@ -58,7 +62,7 @@ public abstract class ProxReaderMixin {
 	/**
 	 * Should be received every 20 server ticks. Might be more or less for numerous factors (lag, changed tick speed)
 	 */
-	@Inject(at = @At("RETURN"), method = "onWorldTimeUpdate")
+	@Inject(at = @At("RETURN"), method = "handleSetTime")
 	public void onWorldTimeUpdate(CallbackInfo info) {
 		if(readersLastCleanedUpAt != -1L && Util.getMillis() - readersLastCleanedUpAt < 750)
 			return; // Already called too recently
@@ -68,7 +72,7 @@ public abstract class ProxReaderMixin {
 		readersLastCleanedUpAt = Util.getMillis();
 	}
 
-	@Inject(at = @At("RETURN"), method = "onBlockBreakingProgress")
+	@Inject(at = @At("RETURN"), method = "handleBlockDestruction")
 	public void onBlockBreakingProgress(ClientboundBlockDestructionPacket packet, CallbackInfo info) {
 		if(packet.getProgress() != 255) return; // Not the result of ABORT_DESTROY_BLOCK
 

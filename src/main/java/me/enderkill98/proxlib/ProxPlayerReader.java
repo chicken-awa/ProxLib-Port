@@ -112,7 +112,11 @@ public class ProxPlayerReader {
             int expectedLength = dataHeader.getA();
             @Nullable Short packedId = dataHeader.getB();
             if(expectedLength < 2 || packedId == null) {
+                //?if >=1.21.9{
+                /*LOGGER.warn("Packet received from {} was too small (length was: {} and packed Id {})!", player.getGameProfile().name(), expectedLength, packedId);
+                *///?}else{
                 LOGGER.warn("Packet received from {} was too small (length was: {} and packed Id {})!", player.getGameProfile().getName(), expectedLength, packedId);
+                //?}
                 dataReader = null;
                 dataHeader = null;
                 return;
