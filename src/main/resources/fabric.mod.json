@@ -4,7 +4,7 @@
   "version": "${version}",
   "name": "${name}",
   "description": "Library that enables close-by players to communicate with each other autonomously.\\nOriginal Author: EnderKill98 | Port by: chicken_awa",
-  "icon": "assets/proxlib/Icon_x128_pngquant.png",
+  "icon": "assets/proxlib/icon.png",
   "authors": [ "EnderKill98, chicken_awa" ],
   "contact": {
     "homepage": "https://github.com/chicken-awa/ProxLib-Port",
